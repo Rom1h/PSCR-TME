@@ -1,4 +1,5 @@
 
+#include "List.h"
 namespace pr {
 
 // ******************* Chainon
@@ -9,15 +10,16 @@ size_t Chainon::length() {
 	if (next != nullptr) {
 		len += next->length();
 	}
-	return length();
+	return len;//faute il faut renvoyer len
 }
-
-void Chainon::print (std::ostream & os) {
+//Faute : definition incorrect const
+void Chainon::print  (std::ostream & os) const{
 	os << data ;
 	if (next != nullptr) {
 		os << ", ";
+		next->print(os);//Faute : on verifie si next est null mais on le met en dehors de la condition
 	}
-	next->print(os);
+
 }
 
 // ******************  List
@@ -44,8 +46,8 @@ void List::push_back (const std::string& val) {
 void List::push_front (const std::string& val) {
 	tete = new Chainon(val,tete);
 }
-
-bool empty() {
+//Faute : manque deffinition de la classe
+bool List::empty() {
 	return tete == nullptr;
 }
 
@@ -57,7 +59,7 @@ size_t List::size() const {
 	}
 }
 
-} // namespace pr
+
 
 std::ostream & operator<< (std::ostream & os, const pr::List & vec)
 {
@@ -68,4 +70,6 @@ std::ostream & operator<< (std::ostream & os, const pr::List & vec)
 	os << "]";
 	return os;
 }
+}// namespace pr
+
 
