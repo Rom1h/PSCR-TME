@@ -3,7 +3,9 @@
 #include <regex>
 #include <chrono>
 #include <vector>
+#include <unordered_map>
 #include "HashMap.hpp"
+#include "util.hpp"
 using namespace std;
 using namespace std::chrono;
 
@@ -14,7 +16,7 @@ void print(vector<pair<int,string>> vec){
 	}
 }
 
-int main () {
+/*int main () {
 
 
 	ifstream input = ifstream("/home/romain/PSCR-TME/TME2/WarAndPeace.txt");
@@ -29,6 +31,7 @@ int main () {
 	regex re( R"([^a-zA-Z])");
 	vector<pair<int,string>> vec;
 	HashMap<string,int> hMap(1000);
+
 	while (input >> word) {
 		// élimine la ponctuation et les caractères spéciaux
 		word = regex_replace ( word, re, "");
@@ -60,12 +63,11 @@ int main () {
 		}*/
 
 
-	}
-	for (std::forward_list<HashMap<string,int>::Entry> &l : hMap.buckets) {
-		for (HashMap<string,int>::Entry &e : l) {
-			pair<int,string> p(e.val,e.key);
-			vec.push_back(p);
-		}
+	/*}
+	for(auto b =hMap.begin(); b!=hMap.end();++b){
+		HashMap<string,int>::Entry e = *b;
+		pair<int,string> p(e.val, e.key);
+		vec.push_back(p);
 	}
 	std::sort(vec.begin(), vec.end(), [] (const pair<int,string> & a, const pair<int,string> & b) { return a.first
 	> b.first ;});
@@ -75,7 +77,69 @@ int main () {
 	input.close();
 	print(vec);
 	cout << "Finished Parsing War and Peace" << endl;
+	size_t countWord =util::count(vec.begin(),vec.end());
+	cout<< "nombre de mot : " << countWord << endl;
+	pair<int,string> p(1,"war");
+	size_t countWar =util::count_if_equal(vec.begin(),vec.end(),p);
+	cout<< "nombre de mot : " << countWar << endl;
+	auto end = steady_clock::now();
+    cout << "Parsing took "
+              << duration_cast<milliseconds>(end - start).count()
+              << "ms.\n";
 
+    cout << "Found a total of " << nombre_lu << " words." << endl;
+
+    return 0;
+}*/
+
+int main () {
+
+
+	ifstream input = ifstream("/home/romain/PSCR-TME/TME2/WarAndPeace.txt");
+
+	auto start = steady_clock::now();
+	cout << "Parsing War and Peace" << endl;
+
+	size_t nombre_lu = 0;
+	// prochain mot lu
+	string word;
+	// une regex qui reconnait les caractères anormaux (négation des lettres)
+	regex re( R"([^a-zA-Z])");
+	vector<pair<int,string>> vec;
+	std::unordered_map<string,int> hMap(1000);
+
+	while (input >> word) {
+		// élimine la ponctuation et les caractères spéciaux
+		word = regex_replace ( word, re, "");
+		// passe en lowercase
+		transform(word.begin(),word.end(),word.begin(),::tolower);
+		auto it = hMap.find(word);
+		if (it != hMap.end()) {
+			it->second++;
+		} else {
+			++nombre_lu;
+			hMap[word] = 1;
+		}
+
+
+	}
+	 // Copier les entrées dans le vecteur vec
+	for (const auto& pair : hMap) {
+		vec.push_back({pair.second, pair.first});
+	}
+	std::sort(vec.begin(), vec.end(), [] (const pair<int,string> & a, const pair<int,string> & b) { return a.first
+	> b.first ;});
+	for(int i = 0;i<10;i++){
+		cout<<"Mot : "<<vec[i].second<<" Count : "<<vec[i].first<< endl;
+	}
+	input.close();
+	print(vec);
+	cout << "Finished Parsing War and Peace" << endl;
+	size_t countWord =util::count(vec.begin(),vec.end());
+	cout<< "nombre de mot : " << countWord << endl;
+	pair<int,string> p(1,"war");
+	size_t countWar =util::count_if_equal(vec.begin(),vec.end(),p);
+	cout<< "nombre de mot : " << countWar << endl;
 	auto end = steady_clock::now();
     cout << "Parsing took "
               << duration_cast<milliseconds>(end - start).count()
@@ -85,5 +149,8 @@ int main () {
 
     return 0;
 }
+
+
+
 
 
