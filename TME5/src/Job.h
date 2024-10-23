@@ -1,5 +1,5 @@
 #pragma once
-
+#include <iostream>
 namespace pr {
 
 class Job {
@@ -9,7 +9,6 @@ public:
 };
 
 // Job concret : exemple
-
 /**
 class SleepJob : public Job {
 	int calcul (int v) {
@@ -30,5 +29,4 @@ public :
 	~SleepJob(){}
 };
 **/
-
 }

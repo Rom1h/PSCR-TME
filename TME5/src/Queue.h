@@ -3,64 +3,89 @@
 
 #include <cstdlib>
 #include <mutex>
+#include <condition_variable>
+#include <cstring>
 
 namespace pr {
 
-// MT safe version of the Queue, non blocking.
-template <typename T>
+// Thread-safe queue
+template<typename T>
 class Queue {
-	T ** tab;
-	const size_t allocsize;
-	size_t begin;
-	size_t sz;
-	mutable std::mutex m;
+    T** tab;
+    const size_t allocsize;
+    size_t begin;
+    size_t sz;
+    mutable std::mutex m;
+    std::condition_variable cond;
+    bool is_blocking = true;
 
-	// fonctions private, sans protection mutex
-	bool empty() const {
-		return sz == 0;
-	}
-	bool full() const {
-		return sz == allocsize;
-	}
+    bool empty() const {
+        return sz == 0;
+    }
+
+    bool full() const {
+        return sz == allocsize;
+    }
+
 public:
-	Queue(size_t size) :allocsize(size), begin(0), sz(0) {
-		tab = new T*[size];
-		memset(tab, 0, size * sizeof(T*));
-	}
-	size_t size() const {
-		std::unique_lock<std::mutex> lg(m);
-		return sz;
-	}
-	T* pop() {
-		std::unique_lock<std::mutex> lg(m);
-		if (empty()) {
-			return nullptr;
-		}
-		auto ret = tab[begin];
-		tab[begin] = nullptr;
-		sz--;
-		begin = (begin + 1) % allocsize;
-		return ret;
-	}
-	bool push(T* elt) {
-		std::unique_lock<std::mutex> lg(m);
-		if (full()) {
-			return false;
-		}
-		tab[(begin + sz) % allocsize] = elt;
-		sz++;
-		return true;
-	}
-	~Queue() {
-		// ?? lock a priori inutile, ne pas detruire si on travaille encore avec
-		for (size_t i = 0; i < sz; i++) {
-			auto ind = (begin + i) % allocsize;
-			delete tab[ind];
-		}
-		delete[] tab;
-	}
+    Queue(size_t size) : allocsize(size), begin(0), sz(0) {
+        tab = new T*[size];
+        memset(tab, 0, size * sizeof(T*));
+    }
+
+    size_t size() const {
+        std::unique_lock<std::mutex> lg(m);
+        return sz;
+    }
+
+    T* pop() {
+        std::unique_lock<std::mutex> lg(m);
+        while (empty() && is_blocking) {
+            cond.wait(lg);
+        }
+        // Si après le réveil c'est toujours vide et on est en mode non bloquant, retourner nullptr
+        if (empty()) {
+            return nullptr;
+        }
+
+        auto ret = tab[begin];
+        tab[begin] = nullptr;
+        sz--;
+        begin = (begin + 1) % allocsize;
+        cond.notify_all(); // Notify other threads after removing an element
+        return ret;
+    }
+
+    bool push(T* elt) {
+        std::unique_lock<std::mutex> lg(m);
+        while (full() && is_blocking) {
+            cond.wait(lg);
+        }
+        // Si après le réveil c'est toujours plein et on est en mode non bloquant, retour false
+        if (full()) {
+            return false;
+        }
+
+        tab[(begin + sz) % allocsize] = elt;
+        sz++;
+        cond.notify_all(); // Notify other threads after adding an element
+        return true;
+    }
+
+    void setBlocking(bool b) {
+        std::unique_lock<std::mutex> lg(m);  // Verrouiller avant de changer le mode
+        is_blocking = b;
+        cond.notify_all(); // Notify all threads in case they need to stop blocking
+    }
+
+    ~Queue() {
+        for (size_t i = 0; i < allocsize; i++) {
+            delete tab[i];
+        }
+        delete[] tab;
+    }
 };
 
-}
+} // namespace pr
 
 #endif /* SRC_QUEUE_H_ */
