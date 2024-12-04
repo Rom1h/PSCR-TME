@@ -3,6 +3,10 @@
 
 #include <netinet/ip.h>
 #include <string>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <iosfwd>
 
 namespace pr {
@@ -23,8 +27,14 @@ public :
 
 	void close();
 };
+}
 
-std::ostream & operator<< (std::ostream & os, struct sockaddr_in * addr);
+/*std::ostream & operator<< (std::ostream & os, struct sockaddr_in * addr{
+	char buf[1024];
+	if(getnameinfo((sockaddr *) addr,sizeof(struct sockaddr_in),buf,1024,NULL,0,0)){
+	 	os<<"HOST = "<<buf<<endl;
+	}
+	os<<inet_ntoa(add->sin_addr);
 
 }
 
