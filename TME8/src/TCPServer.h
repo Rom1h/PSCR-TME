@@ -11,7 +11,7 @@ namespace pr {
 class TCPServer {
 	ServerSocket * ss; // la socket d'attente si elle est instanciee
 	ConnectionHandler * handler; // le gestionnaire de session passe a la constru
-	// a completer
+	vector<thread> connections;
 public :
 	TCPServer(ConnectionHandler * handler): ss(nullptr),handler(handler) {}
 	// Tente de creer une socket d'attente sur le port donné

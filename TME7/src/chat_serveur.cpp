@@ -6,10 +6,14 @@
 #include <string>
 #include <vector>
 using namespace std;
+bool running = true;
+void handler(int sig) {
+    running = false; // Indique aux threads de sortir de leurs boucles
+}
 void sendMessClient(struct message* mess, vector<myshm*>& users) {
+    printf("Message envoyé : %s\n",mess->content);
     for (myshm* s : users) {
         if (s == NULL) {
-            fprintf(stderr, "Invalid pointer in users vector.\n");
             continue;
         }
         sem_wait(&s->semEmpty);
@@ -22,7 +26,7 @@ void sendMessClient(struct message* mess, vector<myshm*>& users) {
         sem_post(&s->sem);
         sem_post(&s->semFull);
 
-        printf("Message sent to %s\n", s->name);
+       
     }
 }
 
@@ -40,8 +44,8 @@ void messManager(struct message* mess, struct myshm* shm, vector<myshm*>& users)
     } else if (mess->type == 3) {
         for (auto i = users.begin(); i != users.end();) {
             if (!strcmp(mess->content, (*i)->name)) {
-                free((*i)->name);   // Libérer la mémoire allouée pour le nom
-                users.erase(i);    // Supprimer l'élément et mettre à jour l'itérateur
+                free((*i)->name);   
+                users.erase(i);   
             } else {
                 ++i;
             }
@@ -63,8 +67,14 @@ int main(int argc, char** argv) {
     }
 
     vector<myshm*> client;
+    struct sigaction act;
+	sigfillset(&act.sa_mask);
+	act.sa_flags = 0;
+	//act.sa_handler = SIG_IGN;
+	act.sa_handler = &handler;
+	sigaction(SIGINT,&act,nullptr);
 
-    while (true) {
+    while (running) {
         sem_wait(&myShm->semFull);
         sem_wait(&myShm->sem);
 
@@ -76,6 +86,11 @@ int main(int argc, char** argv) {
         sem_post(&myShm->sem);
         sem_post(&myShm->semEmpty);
     }
+    sem_close(&myShm->sem);
+    sem_close(&myShm->semEmpty);
+    sem_close(&myShm->semFull);
+    munmap(myShm, sizeof(struct myshm));
+    shm_unlink(name);
 
     return 0;
 }

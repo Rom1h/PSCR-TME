@@ -10,8 +10,12 @@
 #include <thread>
 #include <iostream>
 using namespace std;
+bool running = true;
+void handler(int sig) {
+    running = false; // Indique aux threads de sortir de leurs boucles
+}
 void send(struct myshm * send){
-    while (true)
+    while (running)
     { 
         sem_wait(&send->semEmpty); // Attente d'une place libre
 
@@ -34,10 +38,11 @@ void send(struct myshm * send){
         printf("Message sent: %s\n", mess.content);
 
     }
+
     
 }
 void recept (struct myshm * recept){
-    while(true){
+    while(running){
         sem_wait(&recept->semFull); // Attente d'un message disponible
 
         sem_wait(&recept->sem); // Entrée en section critique
@@ -61,6 +66,12 @@ int main (int argc,char ** argv){
         fprintf(stderr, "Failed to access segment /test\n");
         exit(EXIT_FAILURE);
     }
+    struct sigaction act;
+	sigfillset(&act.sa_mask);
+	act.sa_flags = 0;
+	//act.sa_handler = SIG_IGN;
+	act.sa_handler = &handler;
+	sigaction(SIGINT,&act,nullptr);
 
     struct message mess;
     mess.type = 1;
@@ -82,5 +93,15 @@ int main (int argc,char ** argv){
     for (auto & t : threads) {
 		t.join();
 	}
+     // Nettoyage des ressources
+    sem_close(&myShmRecept->sem);
+    sem_close(&myShmRecept->semEmpty);
+    sem_close(&myShmRecept->semFull);
+    sem_close(&myShmSend->sem);
+    sem_close(&myShmSend->semEmpty);
+    sem_close(&myShmSend->semFull);
+    munmap(myShmRecept, sizeof(struct myshm));
+    munmap(myShmSend, sizeof(struct myshm));
+    shm_unlink(nameClient);
     
 }

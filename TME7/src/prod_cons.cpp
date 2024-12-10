@@ -69,6 +69,7 @@ int main() {
         sem_unlink("/semCons");
         exit(1);
     }
+    close(fd);
 
     // Redimensionner le segment pour contenir la pile
     if (ftruncate(fd, sizeof(Stack<char>)) == -1) {

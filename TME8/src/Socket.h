@@ -37,5 +37,5 @@ public :
 	os<<inet_ntoa(add->sin_addr);
 
 }
-
-#endif /* SRC_SOCKET_H_ */
+*/
+#endif SRC_SOCKET_H_ 

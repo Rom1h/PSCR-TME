@@ -10,7 +10,7 @@
 #include <sys/wait.h>
 #include <ctime>
 #include "rsleep.h"
-int pv = 1;
+int pv = 3;
 void sighandler(int signal){
 	--pv;
 	std::cout<< "pv restant : " <<pv <<" pid "<<getpid()<< std::endl;
@@ -33,13 +33,13 @@ void attaque(pid_t adversaire){
 	act.sa_flags = 0;
 	act.sa_handler = &sighandler;
 	sigaction(SIGINT,&act,nullptr);
-    pv--;
+  
 	if(kill(adversaire,SIGINT)==-1){
 		std::cout<<"L'adversaire est mort."<<adversaire<<std::endl;
 		exit(0);
 	}
 
-	srand(time(nullptr));
+	srand(time(nullptr)+getpid());
 	int sleep_d=700000+rand()%300000;
 	usleep(sleep_d);
 
@@ -51,28 +51,31 @@ void defense (){
 	//act.sa_handler = SIG_IGN;
 	act.sa_handler = &handlerDef;
 	sigaction(SIGINT,&act,nullptr);
+	
 	sigset_t setPos;
 	sigemptyset(&setPos);
 	sigaddset(&setPos,SIGINT);
 	sigprocmask(SIG_BLOCK,&setPos,nullptr);
-	srand(time(nullptr));
+	
+	srand(time(nullptr)+getpid());
 	int sleep_d=300000+rand()%700000;
 	usleep(sleep_d);
-	sigset_t setNeg;
-	sigfillset(&setNeg);
-	sigdelset(&setNeg,SIGINT);
-	sigsuspend(&setNeg);
+	
+	sigprocmask(SIG_UNBLOCK,&setPos,nullptr);
+
+	
 
 
 }
 
 void combat(pid_t adversaire){
-	while(true){
+	while(pv>0){
 		defense();
 		attaque(adversaire);
 	}
 }
 int main(){
+	    srand(time(nullptr));  
 	pid_t pid = fork();
 	if(pid == 0){
 		combat(getppid());

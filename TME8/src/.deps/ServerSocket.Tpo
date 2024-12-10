@@ -1,6 +1,6 @@
-Socket.o: Socket.cpp /usr/include/stdc-predef.h Socket.h \
- /usr/include/netinet/ip.h /usr/include/features.h \
- /usr/include/features-time64.h \
+ServerSocket.o: ServerSocket.cpp /usr/include/stdc-predef.h \
+ ServerSocket.h Socket.h /usr/include/netinet/ip.h \
+ /usr/include/features.h /usr/include/features-time64.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
  /usr/include/x86_64-linux-gnu/bits/timesize.h \
  /usr/include/x86_64-linux-gnu/sys/cdefs.h \
@@ -155,6 +155,7 @@ Socket.o: Socket.cpp /usr/include/stdc-predef.h Socket.h \
  /usr/include/x86_64-linux-gnu/bits/unistd_ext.h \
  /usr/include/linux/close_range.h
 /usr/include/stdc-predef.h:
+ServerSocket.h:
 Socket.h:
 /usr/include/netinet/ip.h:
 /usr/include/features.h:
